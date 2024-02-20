@@ -15,8 +15,6 @@
         const width = 1200 - margin.left - margin.right;
         const height = 1200 - margin.top - margin.bottom;
 
-        const radius = 3;
-        const padding = 1.5;
 
         const dodge = _dodge();
 
@@ -25,8 +23,8 @@
             .range([margin.left, margin.left + width]);
 
         const radiusScale = d3.scaleSqrt()
-            .domain([0, d3.max(tempData, d => d['total'])])
-            .range([1, 10]);
+            .domain([5, d3.max(tempData, d => d['total'])])
+            .range([1, 40]);
 
         // const yScale = d3.scaleLinear()
         //     .domain([0, d3.max(tempData, d => d.proportion)])
@@ -49,14 +47,35 @@
 
         // svg.append('g')
         //     .call(yAxis);
+
+        // const simulation = d3.forceSimulation(tempData)
+        //     .force("x", d3.forceX().x(d => xScale(d['proportion'])))
+        //     .force("y", d3.forceY().y(height/2))
+        //     .force("collide", d3.forceCollide().radius(d => radiusScale(d['total']) + 0.5));
+
+        // simulation.tick(10000);
+
+        // svg.append('g')
+        //     .selectAll("circle")
+        //     .data(tempData)
+        //     .enter()
+        //     .append('circle')
+        //         .attr("cx", (d) => xScale(d['proportion']))
+        //         .attr("cy", (d) => d.y + height/2)
+        //         .attr("r", (d) => radiusScale(d['total']))
+        //         .attr("fill-opacity", 0.4)
+            // .append('title')
+            //     .text(d => d.data.name);
+
         svg.append('g')
             .selectAll('circle')
-            .data(dodge(tempData, {radius: d => (radiusScale(d['total']) * 2 + padding), x: d => xScale(d['proportion'])}))
+            .data(dodge(tempData, {radius: d => (radiusScale(d['total']) * 2), x: d => xScale(d['proportion'])}))
             .enter()
             .append('circle')
                 .attr("cx", d => d.x)
-                .attr("cy", d => height / 2 - d.radius - padding - d.y)
-                .attr("r", d => (d.radius - padding) / 2)
+                .attr("cy", d => height - d.y)
+                .attr("r", d => (d.radius) / 2)
+                .attr("fill-opacity", 0.4)
             .append("title")
                 .text(d => d.data.name);
 
@@ -108,7 +127,7 @@
 
     function _dodge() {
         return ((data, { radius, x }) => {
-            console.log(data.map(d => radius(d)));
+            // console.log(data.map(d => radius(d)));
 
             const epsilon = 1e-3;
             let head = null, tail = null;
@@ -116,16 +135,16 @@
             const circles = data.map(d => ({ x: x(d), radius: radius(d), data: d })).sort((a, b) => {
                 const radiusComparison = b.radius - a.radius;
 
-                return radiusComparison !== 0 ? radiusComparison : a.x - b.x;
+                return radiusComparison !== 0 ? radiusComparison : b.x - a.x;
             });
+
+            const maxRadius = circles[0].radius;
 
             function intersects(x, y, r) {
                 let a = head;
-                if (a === null) return false;
-                let ar;
-                if (a.radius > r) { ar = a.radius } else { ar = r }
                 while (a) {
-                    if (r ** 2 - epsilon > (a.x - x) ** 2 + (a.y - y) ** 2) {
+                    const ar = (a.radius > r) ? a.radius : r;
+                    if (ar ** 2 - epsilon> (a.x - x) ** 2 + (a.y - y) ** 2) {
                         return true;
                     }
                     a = a.next;
@@ -136,20 +155,16 @@
             for (const b of circles) {
                 const r = b.radius;
 
-                while (head && head.x < b.x - r * head.radius) head = head.next;
+                while (head && (head.x < b.x - maxRadius ** 2 || head.x > b.x + maxRadius ** 2)) head = head.next;
 
                 if (intersects(b.x, b.y = 0, r)) {
                     let a = head;
                     b.y = Infinity;
                     do {
-                        let ar;
-                        if (a.radius > r) {
-                            ar = a.radius;
-                        } else {
-                            ar = r;
-                        }
-                        const y1 = a.y + Math.sqrt(ar ** 2 - (a.x - b.x) ** 2);
-                        const y2 = a.y - Math.sqrt(ar ** 2 - (a.x - b.x) ** 2);
+                        const ar = (a.radius > r) ? a.radius : r;
+                        
+                        const y1 = a.y + Math.sqrt(ar**2 - (a.x - b.x) ** 2);
+                        const y2 = a.y - Math.sqrt(ar**2 - (a.x - b.x) ** 2);
 
                         if (Math.abs(y1) < Math.abs(b.y) && !intersects(b.x, y1, r)) b.y = y1;
                         if (Math.abs(y2) < Math.abs(b.y) && !intersects(b.x, y2, r)) b.y = y2;
