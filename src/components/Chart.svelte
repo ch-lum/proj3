@@ -1,20 +1,36 @@
 <script>
     console.log("reset");
 
-    import { onMount } from 'svelte';
+    import { onMount, createEventDispatcher } from 'svelte';
     import * as d3 from 'd3';
+    import { inputValue } from '../store.js';    
+
+    let inputValueValue;
 
     let tempData = [];
     let svg;
     let comments = [];
+    let filterSubstring = "";
 
     let hovered = -1;
     let recorded_mouse_position = { x: 0, y: 0 };
     let anyClicked = false;
+    let searching = false;
+
+    const dispatch = createEventDispatcher();
 
     const initialOpacity = 0.5;
 
+    $: {
+        search(inputValueValue)
+    }
+
+
     onMount(async () => {
+        const unsubscribe = inputValue.subscribe(value => {
+            inputValueValue = value;
+        });
+
         let res = await fetch('words.csv'); 
         let csv = await res.text();
         tempData = d3.csvParse(csv, d3.autoType)
@@ -55,8 +71,9 @@
         //     .domain([0, d3.max(tempData, d => d.proportion)])
         //     .range([height, 0]);
 
-        const xAxis = d3.axisBottom(xScale);
-        // const yAxis = d3.axisLeft(yScale);
+        const xAxis = d3.axisBottom(xScale).tickFormat(d => `${d === 0.5 ? "50/50" 
+                                                                : d < 0.5 ? (1 - d) * 100 + "% Negative" 
+                                                                : d * 100 + "% Positive"}`);
 
         // console.log(xAxis);
 
@@ -70,33 +87,23 @@
             .attr('transform', `translate(0, ${height})`)
             .call(xAxis);
 
-        // svg.append('g')
-        //     .call(yAxis);
-
-        // const simulation = d3.forceSimulation(tempData)
-        //     .force("x", d3.forceX().x(d => xScale(d['proportion'])))
-        //     .force("y", d3.forceY().y(height/2))
-        //     .force("collide", d3.forceCollide().radius(d => radiusScale(d['total']) + 0.5));
-
-        // simulation.tick(10000);
-
-        // svg.append('g')
-        //     .selectAll("circle")
-        //     .data(tempData)
-        //     .enter()
-        //     .append('circle')
-        //         .attr("cx", (d) => xScale(d['proportion']))
-        //         .attr("cy", (d) => d.y + height/2)
-        //         .attr("r", (d) => radiusScale(d['total']))
-        //         .attr("fill-opacity", 0.4)
-            // .append('title')
-            //     .text(d => d.data.name);
+        svg.append('g')
+            .selectAll('line')
+            .data([{ x: 0, color: "#d4322c" }, { x: 1, color: "#22964f" }]) // Adjust x and width based on your data
+            .enter()
+            .append('line')
+                .attr('x1', d => xScale(d.x))
+                .attr('x2', d => xScale(d.x))
+                .attr('y1', d => 0)
+                .attr('y2', d => height)
+                .style('stroke', d => d.color) // Set the stroke color
+                .style('stroke-dasharray', '10,5'); 
 
         svg.append('g')
             .selectAll('circle')
             .data(dodge(tempData, {radius: d => (radiusScale(d['total']) * 2), x: d => xScale(d['proportion'])}))
             .enter()
-            .append('circle')
+            .append('circle')   
                 .attr("cx", d => d.x)
                 .attr("cy", d => height / 2 - d.y)
                 .attr("r", d => (d.radius) / 2)
@@ -123,7 +130,7 @@
                 "positive": posComments.filter(d => d.toLowerCase().includes(word)),
                 "negative": negComments.filter(d => d.toLowerCase().includes(word))
             }
-            console.log(containsWord)
+            // console.log(containsWord)
             return containsWord
         }
 
@@ -144,17 +151,18 @@
             const x = xScale(d.data['proportion']) + margin["left"];
             const y = -d.y + height / 2 + margin["top"]
             
-            const yAdjust = (y > 100) ? -2 : 1
+            const yAdjust = (y > 100) ? 0 : 200
+            const xAdjust = (x < 500) ? 550 : (x > 700) ? -550 : 0
 
             const wordComments = findComments(d.data.word)
             const posSubset = wordComments.positive
             const negSubset = wordComments.negative
-            console.log(posSubset)
+            // console.log(posSubset)
             
 
             tooltip.style("transform", `translate(`
                 + `calc(-50% + ${x}px),`
-                + `calc(${yAdjust} * 100% + ${y}px)`
+                + `calc(-200% + ${yAdjust}px + ${y}px)`
                 + `)`
             )
 
@@ -164,8 +172,8 @@
             document.getElementById("comments-neg").scrollTop = 0
             negatives.style("opacity", 1)
             negatives.style("transform", `translate(`
-                + `calc(-150% + ${x}px),`
-                + `calc(-50% + ${y}px)`
+                + `calc(-150% + ${(x < 500) ? xAdjust : (xAdjust - 100) / 2 }px + ${x}px),`
+                + `calc(-50% + ${yAdjust}px + ${y}px)`
                 + `)`
             )
 
@@ -179,8 +187,8 @@
             document.getElementById("comments-pos").scrollTop = 0
             positives.style("opacity", 1)
             positives.style("transform", `translate(`
-                + `calc(50% + ${x}px),`
-                + `calc(-50% + ${y}px)`
+                + `calc(50% + ${(x < 500) ? (xAdjust + 100) / 2 : xAdjust}px + ${x}px),`
+                + `calc(-50% + ${yAdjust}px + ${y}px)`
                 + `)`
             )
 
@@ -206,15 +214,15 @@
 
         function handleMouseEnter(event, d) {
             if (!anyClicked) {
-                d3.select(this).attr('fill-opacity', 1);
+                if (!searching) d3.select(this).attr('fill-opacity', 1);
                 appear(d)
-                console.log(d.data.total)
+                // console.log(d.data.total)
             }
         }
     
         function handleMouseLeave(event, d) {
             if (!anyClicked) {
-                d3.select(this).attr('fill-opacity', initialOpacity);
+                if (!searching) d3.select(this).attr('fill-opacity', initialOpacity);
                 tooltip.style("opacity", 0)
                 tooltip.style("transform", `translate(-1000px, -1000px)`)
                 negatives.style("opacity", 0)
@@ -240,7 +248,13 @@
             anyClicked = (d.clicked) ? true : false;
             event.stopPropagation();
 
-        }                
+        }
+
+        
+        
+        return () => {
+            unsubscribe();
+        };
     });
         
     function _dodge() {
@@ -298,6 +312,33 @@
             return circles;
         });
     }
+
+    function search(substring) {
+        if (substring === "") {
+            d3.selectAll("circle")
+                .attr("fill-opacity", initialOpacity)
+                .attr("stroke", "grey")
+            searching = false;
+            return false
+        };
+
+        searching = true;
+
+        if (typeof document !== 'undefined') {
+            d3.selectAll("circle")
+                .attr("fill-opacity", initialOpacity)
+                .attr("stroke", "grey");
+            const searched = d3.selectAll("circle").filter(d => {
+                let word = d.data.word
+                return typeof word === "string" && word.includes(substring)
+            });
+            d3.selectAll("circle")
+                .attr("fill-opacity", 0)
+                .attr("stroke", "lightgrey");
+            searched.attr("fill-opacity", 1)
+                .attr("stroke", "grey");
+        }
+    }   
 </script>
 
 <style>
