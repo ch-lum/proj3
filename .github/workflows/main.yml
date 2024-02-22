@@ -22,7 +22,7 @@ jobs:
 
       - name: build
         env:
-          BASE_PATH: '/${{ github.event.repository.name }}'
+          BASE_PATH: '/$proj3'
         run: |
           npm run build
 
