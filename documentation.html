@@ -1,0 +1,80 @@
+<html>
+    <body>
+        <h1>DSC 106 Project 3 Documentation</h1>
+        <h2>Design and Design Decisions</h2>
+        <p>
+            For this project, we decided to create a beeswarm plot to demonstrate how words appear in comments in our Biden Facebook post dataset. 
+            Our methodology started with deciding that we wanted to continue using the Biden dataset and using sentiment analysis. 
+            The information we wanted to incude was primarily the comments themselves, so we had that as our target for interactivity, since all 1300 comments wouldn't be visible in any reasonable static graphic.
+            <br><br>
+            Then, we settled on encoding total number of comments appeared in as well as the proportion of those comments that are positive.
+            We decided to make our marks balls that represent each word, and encode the total number of comments as the area of the circle.
+            One option we had considered was displaying words themselves, but we couldn't come up with a neat way to display the words while still making clear which words were appearing more than others.
+            This was especially an issue with short vs long words, where long words naturally appeared larger than short words, even though their font sizes were similar.
+            We encoded the proportion-of-positive-comments-appeared-in with both the position along the x-axis and with color.
+            Though color was redundant, we thought it was important to make the chart more engaging to look at.
+            Lastly, we considered making a pure scatter plot and encoding number of appearances on the y-axis, but we felt that that implies some sort of correlation where there wasn't.
+            By nature of the beeswarm plot, you can somewhat tell that most comments are negative based on the y-axis, but this was unintentional.
+            <br><br>
+            Our interaction was all done to prioritize how we engage with the comments themselves, framed by the words.
+            Primarily, we wanted to make hovering over each datapoint display more information of some kind.
+            We decided to place the tooltip for each word beside the point/mouse cursor because that's where the reader's eyes would be.
+            In order to make the chart more visually appealing, we decided to keep small boxes and put the comments as scrolling text within each box.
+            This was done to keep the visualization clutter-free and allow for the reader to engage with the comments in a unique way.
+            The two sides scroll together while hovering over the ball (and in general) which we thought was pretty cool.
+            Lastly, a search bar was added to the top right.
+            We have the balls light up when letters start getting typed as a fun visual, but also to highlight that each ball is actually encoded with a word.
+            <br><br>
+            Our main alternative (and possibly biggest time sink) was our original idea.
+            Originally, we wanted to prioritize comments further by encoding individual comments to balls and then coming up with a creative way to organize them.
+            We wanted to use clustering to organize the balls into categories based on topics, and this went pretty well until we further explored how K-means clustering actually clustered our data.
+            This was inspired by the fact that a handful of comments were talking about the economy, Palestine, or other things.
+            Ultimately, we had to move away from that idea, but it was what pushed us to prioritize highlighting comments through our interaction.
+        </p>
+        <h2>Development Process</h2>
+        <p>
+            Our work was split pretty evenly, where we did a handful of the tasks together.
+            Our initial planning happened quickly and together so deciding on how we were going to encode the data was a desicion we made together.
+            Once we had a rough draft of our plan made, we began to split work due to scheduling constraints.
+        </p> 
+        <img src="/static/draft.png">
+        <p>
+            The list of plans was as follows:
+        </p>
+        <ul>
+            <li>Chris put the dataset together from the Biden dataset, using sentiment analysis and grouping the data to index it based on words (< 1 hour).</li>
+            <li><s>Chris spends time exploring the K-means idea (> 3 hours)</s></li>
+            <li>Chris then put together the rough code with d3 to get the beeswarm plot in order (6 hours).</li>
+            <li>Gino got control over the rough interactivity including the tooltips and search bar(5 hours).</li>
+            <li>One final meeting was able to style and make finishing touches (3 hours).</li>
+        </ul>
+        <p>
+            The things that took the longest were when we had to go beyond the ideas covered in labs ourselves.
+            Implimenting the beeswarm took forever because Chris lowkey learned how to circle pack.
+            The interactivity took a while because Gino began using a different method from the lab and then was on his own.
+            Going beyond the class and creating new ideas was very difficult, but rewarding.
+        </p>
+        <h2>Final Thoughts</h2>
+        <p>
+            Please like it, we're begging you.
+        </p>
+    </body>
+</html>
+
+<style>
+    body {
+        padding: 50px 25%;
+        font-family: Georgia;
+        font-size: 20px;
+    }
+
+    p, ul {
+        font-family: helvetica;
+    }
+    
+    img {
+        width: 600px;
+        position: relative;
+        left: 60px
+    }
+</style>
