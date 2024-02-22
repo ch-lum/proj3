@@ -11,7 +11,7 @@
     <div id="wrapper" class="wrapper">
         <div class="titles">
             <h1>When our words are used</h1>
-            <h2>Hover, click, and search through the vocabulary of 1360 Facebook comments on a POTUS post announcing the creation of 14 million jobs. Only includes words that appear in 10 or more comments.</h2>
+            <h2>Hover, click, search, and scroll through the vocabulary of 1360 Facebook comments on a POTUS post announcing the creation of 14 million jobs. Only includes words that appear in 10 or more comments.</h2>
         </div>
         <input type="text" id="substring-input" class="search" bind:value={$inputValue} on:input={handleInputChange} placeholder="Search here">
 
@@ -125,7 +125,7 @@
         position: absolute;
         top: 60px;
         left: 850px;
-        z-index: 1;
+        z-index: 0;
         text-align: center;
         color: gray;
         background-color: rgba(174, 185, 207, 0.452);

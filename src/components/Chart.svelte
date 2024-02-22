@@ -125,10 +125,17 @@
             document.getElementById("comments-pos").scrollTop += event.deltaY
         }, { passive: false })
 
+        function replacePunctuationWithSpace(str) {
+            // Use a regular expression to replace punctuation with spaces
+            const result = str.replace(/[!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]/g, ' ');
+
+            return result;
+        }
+
         function findComments(word) {
             const containsWord = {
-                "positive": posComments.filter(d => d.toLowerCase().includes(word)),
-                "negative": negComments.filter(d => d.toLowerCase().includes(word))
+                "positive": posComments.filter(d => replacePunctuationWithSpace(d).toLowerCase().includes(" " + word + " ")),
+                "negative": negComments.filter(d => replacePunctuationWithSpace(d).toLowerCase().includes(" " + word + " "))
             }
             // console.log(containsWord)
             return containsWord
@@ -172,7 +179,7 @@
             document.getElementById("comments-neg").scrollTop = 0
             negatives.style("opacity", 1)
             negatives.style("transform", `translate(`
-                + `calc(-150% + ${(x < 500) ? xAdjust : (xAdjust - 100) / 2 }px + ${x}px),`
+                + `calc(-150% + ${(x < 500) ? xAdjust : (x > 700) ? (xAdjust - 100) / 2 : 0}px + ${x}px),`
                 + `calc(-50% + ${yAdjust}px + ${y}px)`
                 + `)`
             )
